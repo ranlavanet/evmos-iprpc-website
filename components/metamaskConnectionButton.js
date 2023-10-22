@@ -10,14 +10,14 @@ const MetaMaskConnectButton = () => {
     setConnecting(true);
     if (window.ethereum) {
       try {
-        // Request MetaMask permission to connect
-        await window.ethereum.enable();
+        // console.log(window.ethereum.isConnected())
+        // Request user accounts using the new 'eth_requestAccounts' method
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-        // Create a Web3 instance using the MetaMask provider
-        const web3Instance = new Web3(window.ethereum);
+        if (accounts && accounts.length > 0) {
+          // Create a Web3 instance using the MetaMask provider
+          const web3Instance = new Web3(window.ethereum);
 
-        // Check if the connection is successful
-        if (web3Instance.currentProvider.isConnected()) {
           router.push('/sendTxPage'); // Redirect to the sendTxPage upon successful connection
         }
       } catch (error) {
@@ -26,6 +26,7 @@ const MetaMaskConnectButton = () => {
         setConnecting(false);
       }
     } else {
+      alert("metamask is not installed. please install metamask extension")
       console.error('MetaMask is not installed or not detected.');
       setConnecting(false);
     }

@@ -19,6 +19,8 @@ const AccountInfo = () => {
           const balanceEther = web3.utils.fromWei(balanceWei, 'ether');
           setBalance(balanceEther);
         }
+      } else {
+        alert("metamask is not installed. please install metamask extension")
       }
     }
 

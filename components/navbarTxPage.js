@@ -9,9 +9,8 @@ const Navbar = () => {
   const navigation = [
     // "Home"
   ];
-
   const { theme } = useTheme(); // Get the current theme
-  const homeImageSrc = theme === "dark" ? "/img/home2.png" : "/img/homeBlack.png";
+  const homeImageSrc = (theme === "dark" || theme === "system") ? "/img/home2.png" : "/img/homeBlack.png";
 
   return (
     <div className="w-full">
