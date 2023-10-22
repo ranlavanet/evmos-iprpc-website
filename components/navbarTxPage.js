@@ -2,7 +2,6 @@ import Link from "next/link";
 import ThemeChanger from "./DarkSwitch";
 import Image from "next/image"
 import { Disclosure } from "@headlessui/react";
-import MetaMaskConnectButton from "./metamaskConnectionButton";
 import AccountInfo from "./accountInfo";
 const Navbar = () => {
   const navigation = [
