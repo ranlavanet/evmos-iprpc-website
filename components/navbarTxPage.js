@@ -3,13 +3,10 @@ import ThemeChanger from "./DarkSwitch";
 import Image from "next/image"
 import { Disclosure } from "@headlessui/react";
 import MetaMaskConnectButton from "./metamaskConnectionButton";
-
+import AccountInfo from "./accountInfo";
 const Navbar = () => {
   const navigation = [
-    // "Products",
-    // "Features",
-    // "Community",
-    // "Docs",
+    // "Home"
   ];
 
   return (
@@ -20,7 +17,7 @@ const Navbar = () => {
           {({ open }) => (
             <>
               <div className="flex flex-wrap items-center justify-between w-full lg:w-auto">
-                <Link href="https://www.lavanet.xyz/" target="_blank" style={{ marginRight: '20px' }}>
+                <Link href="/">
                   <span className="flex items-center space-x-2 text-2xl font-medium text-indigo-500 dark:text-gray-100">
                     <span>
                       <Image
@@ -31,24 +28,9 @@ const Navbar = () => {
                         className="w-8"
                       />
                     </span>
-                    <span>Lava Network</span>
+                    <span>Return</span>
                   </span>
                 </Link>
-                <Link href="https://evmos.org/" target="_blank">
-                  <span className="flex items-center space-x-2 text-2xl font-medium text-indigo-500 dark:text-gray-100">
-                    <span>
-                      <Image
-                        src="/img/evmos.svg"
-                        alt="N"
-                        width="32"
-                        height="32"
-                        className="w-8"
-                      />
-                    </span>
-                    <span>Evmos Org</span>
-                  </span>
-                </Link>
-
                 <Disclosure.Button
                   aria-label="Toggle Menu"
                   className="px-2 py-1 ml-auto text-gray-500 rounded-md lg:hidden hover:text-indigo-500 focus:text-indigo-500 focus:bg-indigo-100 focus:outline-none dark:text-gray-300 dark:focus:bg-trueGray-700">
@@ -103,7 +85,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden mr-3 space-x-4 lg:flex nav__item">
-          <MetaMaskConnectButton />
+          <AccountInfo />
 
           <ThemeChanger />
         </div>

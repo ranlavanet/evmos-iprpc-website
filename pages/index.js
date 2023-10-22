@@ -3,30 +3,30 @@ import Hero from "../components/hero";
 import Navbar from "../components/navbar";
 import SectionTitle from "../components/sectionTitle";
 
-import { benefitOne, benefitTwo } from "../components/data";
-import Video from "../components/video";
-import Benefits from "../components/benefits";
-import Footer from "../components/footer";
-import Testimonials from "../components/testimonials";
-import Cta from "../components/cta";
-import Faq from "../components/faq";
-import PopupWidget from "../components/popupWidget";
+// import { benefitOne, benefitTwo } from "../components/data";
+// import Video from "../components/video";
+// import Benefits from "../components/benefits";
+// import Footer from "../components/footer";
+// import Testimonials from "../components/testimonials";
+// import Cta from "../components/cta";
+// import Faq from "../components/faq";
+// import PopupWidget from "../components/popupWidget";
 
 const Home = () => {
   return (
     <>
       <Head>
-        <title>Nextly - Free Nextjs & TailwindCSS Landing Page Template</title>
+        <title>Lava -Evmos ipRPC dapp</title>
         <meta
           name="description"
-          content="Nextly is a free landing page template built with next.js & Tailwind CSS"
+          content="decentralized application for reward distribution"
         />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/img/logo.png" />
       </Head>
 
       <Navbar />
       <Hero />
-      <SectionTitle
+      {/* <SectionTitle
         pretitle="Nextly Benefits"
         title=" Why should you use this landing page">
         Nextly is a free landing page & marketing website template for startups
@@ -57,7 +57,7 @@ const Home = () => {
       <Faq />
       <Cta />
       <Footer />
-      <PopupWidget />
+      <PopupWidget /> */}
     </>
   );
 }
