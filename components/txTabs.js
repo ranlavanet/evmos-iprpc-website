@@ -6,19 +6,20 @@ import React, { useState } from 'react';
 import InputChecker from "./fundInputChecker"
 import Web3 from "web3"
 import { LavaEvmosProviderPaymentContract__factory } from "../contract/typechain-types"
+import { LavaEvmosProviderPaymentContract } from "../contract/typechain-types"
 const EvmosTestnetGateway = "https://g.w.lavanet.xyz:443/gateway/evmost/json-rpc-http/9dbe4f2c6a0baba4cd27acb8ef3d7499"
 const EvmosMainnetGateway = "https://g.w.lavanet.xyz:443/gateway/evmos/json-rpc-http/9dbe4f2c6a0baba4cd27acb8ef3d7499"
 const EvmosTestnetContract = "0x02bBCa20734bEc605A9BBB87123253EB1975D1E1"
 const EvmosMainnetContract = ""
 const web3Provider = new Web3(EvmosTestnetGateway);
-
-
+const contractAddress = EvmosTestnetContract; // Replace with your contract address
+var fileInfo;
 const TxTabs = () => {
     const [uploadedData, setUploadedData] = useState(null);
     const handleFileUpload = (data) => {
         setUploadedData(data);
+        fileInfo = data;
     };
-
   return (
     <div className="max-w-2xl mb-8">
       <Tabs>
@@ -30,41 +31,32 @@ const TxTabs = () => {
         {/* Content for Tab 1 */}
         <TabPanel style={{ minHeight: '500px', minWidth: '500px'}}>
         <div>
-            <InputChecker onButtonPress={(inputValue) => {
+            <InputChecker onButtonPress={async (inputValue) => {
                     console.log('Clicked', inputValue);
                     if (window.ethereum) {
                         if (window.ethereum.isConnected()) {
-                            const wallet = new Web3(window.ethereum);
-                            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
-                            console.log(myContract)
-                            window.ethereum.request({ method: 'eth_requestAccounts' })
-                                .then((accounts) => {
+                            await window.ethereum.request({ method: 'eth_requestAccounts' })
+                                .then(async (accounts) => {
                                 const fromAccount = accounts[0];
-                                const contractAddress = EvmosTestnetContract; // Replace with your contract address
-                                const etherAmount = web3.utils.toWei('1', 'ether'); // Amount to send (1 ETH)
-
-                                // Send Ether to the contract
-                                web3.eth.sendTransaction({
-                                    from: fromAccount,
-                                    to: contractAddress,
-                                    value: etherAmount,
-                                })
-                                .on('transactionHash', (hash) => {
-                                    console.log('Transaction hash:', hash);
-                                    // The transaction is being processed
-                                })
-                                .on('receipt', (receipt) => {
-                                    console.log('Transaction receipt:', receipt);
-                                    // The transaction was confirmed
-                                })
-                                .on('error', (error) => {
-                                    console.error('Transaction error:', error);
-                                    // An error occurred during the transaction
-                                });
+                                console.log(inputValue)
+                                const evmosAmount = Web3.utils.toWei(inputValue, 'milliether');
+                                console.log(evmosAmount)
+                                await window.ethereum.request({ 
+                                    method: "eth_sendTransaction",
+                                    params: [{
+                                        from: fromAccount,
+                                        to: contractAddress,
+                                        value: evmosAmount,
+                                    }],}).then((result) => {
+                                        alert("tx sent Hash: " + String(result));
+                                        console.log(result);
                                 })
                                 .catch((error) => {
                                 console.error('MetaMask account access denied:', error);
                                 });
+                            }).catch((error) => {
+                                console.error('MetaMask account access denied:', error);
+                            })
                         } else {
                         alert("Metamask is not connected. Please connect and try again")
                         }
@@ -82,25 +74,44 @@ const TxTabs = () => {
                 <div className="rounded-lg p-4 border border-gray-300" >
                     <FileInputComponent onFileUpload={handleFileUpload}/>
                 </div>
-                {uploadedData ? (
-                    // <UploadedComponent data={uploadedData} />
-                    <button className="px-6 py-2 text-white bg-green-600 rounded-md md:ml-5"  onClick={() => {
-                    console.log("clicked")                  
-                    // Add your click event logic here
-                    // For example, router.push('/some-route') to navigate to another page
-                    if (window.ethereum) {
-                        if (window.ethereum.isConnected()) {
-                            const wallet = new Web3(window.ethereum);
-                            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
-                            console.log(myContract)
-                        
-                        } else {
-                        alert("Metamask is not connected. Please connect and try again")
+                {uploadedData ? ( 
+                    <button className="px-6 py-2 text-white bg-green-600 rounded-md md:ml-5" data={uploadedData}  onClick={async () => {
+                            if (window.ethereum) {
+                                if (window.ethereum.isConnected()) {
+                                    const wallet = new Web3(window.ethereum);
+                                    const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
+                                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+                                    const fromAccount = accounts[0];
+                                    const paymentListOfProviders = [];
+                                    console.log(uploadedData)
+                                    
+                                    for (let item of  Object.getOwnPropertyNames(uploadedData)) {
+                                        const evmosAmount = Web3.utils.toWei(uploadedData[item], 'ether');
+                                        console.log("adding payee element", item, uploadedData[item], "eth amount", evmosAmount)
+                                        paymentListOfProviders.push({name: item, value: evmosAmount})
+                                    }
+                                    const functionCallData = myContract.methods.payProviders(paymentListOfProviders).encodeABI();
+                                    await window.ethereum.request({ 
+                                        method: "eth_sendTransaction",
+                                        params: [{
+                                            from: fromAccount,
+                                            to: contractAddress,
+                                            data: functionCallData,
+                                        }],}).then((result) => {
+                                            alert("tx sent Hash: " + String(result));
+                                            console.log(result);
+                                    })
+                                    .catch((error) => {
+                                    console.error('MetaMask account access denied:', error);
+                                    });
+                                } else {
+                                alert("Metamask is not connected. Please connect and try again")
+                                }
+                            } else {
+                                alert("metamask is not installed. please install metamask extension")
+                            }
                         }
-                    } else {
-                        alert("metamask is not installed. please install metamask extension")
-                    }
-                    }}>
+                    }>
                     Launch Transaction
                     </button>
                 ) : (
