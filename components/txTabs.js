@@ -31,40 +31,7 @@ const TxTabs = () => {
         {/* Content for Tab 1 */}
         <TabPanel style={{ minHeight: '500px', minWidth: '500px'}}>
         <div>
-            <InputChecker onButtonPress={async (inputValue) => {
-                    console.log('Clicked', inputValue);
-                    if (window.ethereum) {
-                        if (window.ethereum.isConnected()) {
-                            await window.ethereum.request({ method: 'eth_requestAccounts' })
-                                .then(async (accounts) => {
-                                const fromAccount = accounts[0];
-                                console.log(inputValue)
-                                const evmosAmount = Web3.utils.toWei(inputValue, 'milliether');
-                                console.log(evmosAmount)
-                                await window.ethereum.request({ 
-                                    method: "eth_sendTransaction",
-                                    params: [{
-                                        from: fromAccount,
-                                        to: contractAddress,
-                                        value: evmosAmount,
-                                    }],}).then((result) => {
-                                        alert("tx sent Hash: " + String(result));
-                                        console.log(result);
-                                })
-                                .catch((error) => {
-                                console.error('MetaMask account access denied:', error);
-                                });
-                            }).catch((error) => {
-                                console.error('MetaMask account access denied:', error);
-                            })
-                        } else {
-                        alert("Metamask is not connected. Please connect and try again")
-                        }
-                    } else {
-                        alert("metamask is not installed. please install metamask extension")
-                    }
-                }}>
-            </InputChecker>
+            <InputChecker buttonText={"Launch Transaction"} label1={" Enter Amount"} text1={"Amount:"} onButtonPress={fundSmartContract}></InputChecker>
         </div>
         </TabPanel>
         {/* Content for Tab 2 (leave it empty) */}
@@ -75,43 +42,7 @@ const TxTabs = () => {
                     <FileInputComponent onFileUpload={handleFileUpload}/>
                 </div>
                 {uploadedData ? ( 
-                    <button className="px-6 py-2 text-white bg-green-600 rounded-md md:ml-5" data={uploadedData}  onClick={async () => {
-                            if (window.ethereum) {
-                                if (window.ethereum.isConnected()) {
-                                    const wallet = new Web3(window.ethereum);
-                                    const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
-                                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-                                    const fromAccount = accounts[0];
-                                    const paymentListOfProviders = [];
-                                    console.log(uploadedData)
-                                    
-                                    for (let item of  Object.getOwnPropertyNames(uploadedData)) {
-                                        const evmosAmount = Web3.utils.toWei(uploadedData[item], 'ether');
-                                        console.log("adding payee element", item, uploadedData[item], "eth amount", evmosAmount)
-                                        paymentListOfProviders.push({name: item, value: evmosAmount})
-                                    }
-                                    const functionCallData = myContract.methods.payProviders(paymentListOfProviders).encodeABI();
-                                    await window.ethereum.request({ 
-                                        method: "eth_sendTransaction",
-                                        params: [{
-                                            from: fromAccount,
-                                            to: contractAddress,
-                                            data: functionCallData,
-                                        }],}).then((result) => {
-                                            alert("tx sent Hash: " + String(result));
-                                            console.log(result);
-                                    })
-                                    .catch((error) => {
-                                    console.error('MetaMask account access denied:', error);
-                                    });
-                                } else {
-                                alert("Metamask is not connected. Please connect and try again")
-                                }
-                            } else {
-                                alert("metamask is not installed. please install metamask extension")
-                            }
-                        }
-                    }>
+                    <button className="px-6 py-2 text-white bg-green-600 rounded-md md:ml-5" data={uploadedData}  onClick={async () => {await payProviders(uploadedData);}}>
                     Launch Transaction
                     </button>
                 ) : (
@@ -132,11 +63,145 @@ const TxTabs = () => {
         </TabPanel>
         {/* Content for Tab 3 (leave it empty) */}
         <TabPanel style={{ minHeight: '500px', minWidth: '500px' }}>
-          <div></div>
+            <div style={{ marginBottom: '20px' }}>
+            <InputChecker buttonText={"Launch Transaction"} label1={"Enter address"} text1={"Set Backup Owner:"} disableIsNumberValidation={true} onButtonPress={sendSetBackupOwnerTx}></InputChecker>
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+            <InputChecker buttonText={"Launch Transaction"} label1={"Enter address"} text1={"Set Different Owner:"} disableIsNumberValidation={true} onButtonPress={sendSetOwnerTx}></InputChecker>
+            </div>
         </TabPanel>
       </Tabs>
     </div>
   );
 };
+
+async function fundSmartContract(inputValue) {
+    console.log('Clicked', inputValue);
+    if (window.ethereum) {
+        if (window.ethereum.isConnected()) {
+            await window.ethereum.request({ method: 'eth_requestAccounts' })
+                .then(async (accounts) => {
+                const fromAccount = accounts[0];
+                console.log(inputValue)
+                const evmosAmount = Web3.utils.toWei(inputValue, 'milliether');
+                console.log(evmosAmount)
+                await window.ethereum.request({ 
+                    method: "eth_sendTransaction",
+                    params: [{
+                        from: fromAccount,
+                        to: contractAddress,
+                        value: evmosAmount,
+                    }],}).then((result) => {
+                        alert("tx sent Hash: " + String(result));
+                        console.log(result);
+                })
+                .catch((error) => {
+                console.error('MetaMask account access denied:', error);
+                });
+            }).catch((error) => {
+                console.error('MetaMask account access denied:', error);
+            })
+        } else {
+        alert("Metamask is not connected. Please connect and try again")
+        }
+    } else {
+        alert("metamask is not installed. please install metamask extension")
+    }
+}
+
+async function sendSetBackupOwnerTx(inputValue) {
+    if (window.ethereum) {
+        if (window.ethereum.isConnected()) {
+            const wallet = new Web3(window.ethereum);
+            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+            const fromAccount = accounts[0];
+            const functionCallData = myContract.methods.setBackUpOwner(inputValue).encodeABI();
+            await window.ethereum.request({ 
+                method: "eth_sendTransaction",
+                params: [{
+                    from: fromAccount,
+                    to: contractAddress,
+                    data: functionCallData,
+                }],}).then((result) => {
+                    alert("tx sent Hash: " + String(result));
+                    console.log(result);
+            })
+            .catch((error) => {
+            console.error('MetaMask account access denied:', error);
+            });
+        } else {
+        alert("Metamask is not connected. Please connect and try again")
+        }
+    } else {
+        alert("metamask is not installed. please install metamask extension")
+    }
+}
+
+async function sendSetOwnerTx(inputValue) {
+    if (window.ethereum) {
+        if (window.ethereum.isConnected()) {
+            const wallet = new Web3(window.ethereum);
+            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+            const fromAccount = accounts[0];
+            const functionCallData = myContract.methods.setOwner(inputValue).encodeABI();
+            await window.ethereum.request({ 
+                method: "eth_sendTransaction",
+                params: [{
+                    from: fromAccount,
+                    to: contractAddress,
+                    data: functionCallData,
+                }],}).then((result) => {
+                    alert("tx sent Hash: " + String(result));
+                    console.log(result);
+            })
+            .catch((error) => {
+            console.error('MetaMask account access denied:', error);
+            });
+        } else {
+        alert("Metamask is not connected. Please connect and try again")
+        }
+    } else {
+        alert("metamask is not installed. please install metamask extension")
+    }
+}
+
+async function payProviders(uploadedData) {
+    if (window.ethereum) {
+        if (window.ethereum.isConnected()) {
+            const wallet = new Web3(window.ethereum);
+            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+            const fromAccount = accounts[0];
+            const paymentListOfProviders = [];
+            console.log(uploadedData)
+            
+            for (let item of  Object.getOwnPropertyNames(uploadedData)) {
+                const evmosAmount = Web3.utils.toWei(uploadedData[item], 'ether');
+                console.log("adding payee element", item, uploadedData[item], "eth amount", evmosAmount)
+                paymentListOfProviders.push({name: item, value: evmosAmount})
+            }
+            const functionCallData = myContract.methods.payProviders(paymentListOfProviders).encodeABI();
+            await window.ethereum.request({ 
+                method: "eth_sendTransaction",
+                params: [{
+                    from: fromAccount,
+                    to: contractAddress,
+                    data: functionCallData,
+                }],}).then((result) => {
+                    alert("tx sent Hash: " + String(result));
+                    console.log(result);
+            })
+            .catch((error) => {
+            console.error('MetaMask account access denied:', error);
+            });
+        } else {
+        alert("Metamask is not connected. Please connect and try again")
+        }
+    } else {
+        alert("metamask is not installed. please install metamask extension")
+    }
+}
 
 export default TxTabs;
