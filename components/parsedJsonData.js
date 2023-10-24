@@ -1,17 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-const ParsedDataComponent = ({ data }) => {
-  // Calculate the width of the container based on the length of the data
-  const containerWidth = `${Math.min(600, JSON.stringify(data, null, 2).length * 20)}px`;
+const ParsedDataComponent = ({ data, setEditedData }) => {
+  // Initialize the editableData state when the component mounts
+  const [editableData, setEditableData] = useState(JSON.stringify(data, null, 2));
 
-  // Set padding to create a buffer from the edges
+  // Update the editableData state when the data prop changes
+  useEffect(() => {
+    setEditableData(JSON.stringify(data, null, 2));
+  }, [data]);
+
+  const containerWidth = '600px';
   const containerPadding = '8px';
+
+  const handleDataChange = (event) => {
+    // Update the editableData state when the user makes changes
+    const newData = event.target.value;
+    setEditableData(newData);
+
+    // Pass the edited data to the parent component
+    setEditedData(newData);
+  };
 
   return (
     <div className="border border-gray-300 rounded-md" style={{ width: containerWidth, padding: containerPadding }}>
-      {/* Display the parsed data here */}
-      <h2>Parsed Data</h2>
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+      <h2>Loaded Data</h2>
+      <textarea
+        value={editableData}
+        onChange={handleDataChange}
+        rows="20"
+        style={{ width: '100%', padding: '8px' }}
+      />
     </div>
   );
 };

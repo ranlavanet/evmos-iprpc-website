@@ -1,5 +1,5 @@
 import Head from "next/head";
-import Hero from "../components/hero";
+import MainPageComponent from "../components/mainPageComponent";
 import Navbar from "../components/navbar";
 
 const Home = () => {
@@ -14,7 +14,7 @@ const Home = () => {
         <link rel="icon" href="/img/logo.png" />
       </Head>
       <Navbar />
-      <Hero />
+      <MainPageComponent />
     </>
   );
 }

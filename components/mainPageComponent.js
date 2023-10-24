@@ -4,7 +4,7 @@ import heroImg from "../public/img/test1.png";
 import Link from "next/link";
 import MetaMaskConnectButton from "./metamaskConnectionButton";
 
-const Hero = () => {
+const MainPageComponent = () => {
   return (
     <>
       <Container className="flex flex-wrap ">
@@ -194,4 +194,4 @@ function VerizonLogo() {
   );
 }
 
-export default Hero;
+export default MainPageComponent;
