@@ -4,10 +4,11 @@ import Web3 from "web3"
 import { LavaEvmosProviderPaymentContract__factory } from "../contract/typechain-types"
 import { ContractAddress } from "./utils"
 import FileInputComponent from "./fileInput";
+import EditableInputComponent from "./paymentAmount"
 
 const PayProvidersComponent = () => {
-    var latestData;
     const [uploadedData, setUploadedData] = useState(null);
+    const [paymentAmount, setPaymentAmount] = useState(0);
 
     const handleFileUpload = (data) => {
         console.log("HAHAHAH2")
@@ -15,19 +16,31 @@ const PayProvidersComponent = () => {
         setUploadedData(data);
     };
     const handleLaunchTransaction = async () => {
-        await payProviders(latestData);
+        await payProviders(uploadedData, paymentAmount);
     };
 
     const setData = (data) => {
         console.log("changing data", data.slice(0, 20))
-        latestData = data;
+        try {
+            const parsedData = JSON.parse(data);
+            console.log('Data is valid JSON:', parsedData);
+            setUploadedData(parsedData);
+          } catch (error) {
+            console.error('Error parsing JSON:', error);
+            // Handle the error, e.g., display an error message to the user
+          }
     }
 
     useEffect(() => {
         // This useEffect will run when uploadedData changes
         console.log('Uploaded data has changed PayProvidersComponent:', uploadedData);
-        latestData = uploadedData;
+        setUploadedData(uploadedData);
     }, [uploadedData]);
+
+    useEffect(() => {
+        // This useEffect will run when uploadedData changes
+        console.log('paymentAmount data has changed', paymentAmount);
+    }, [paymentAmount]);
 
     return (
         <div className="max-w-2xl mb-8">
@@ -55,17 +68,39 @@ const PayProvidersComponent = () => {
                 )}
             </div>
             {uploadedData ? (
-                <ParsedDataComponent data={uploadedData} setEditedData={setData} />
+                <EditableInputComponent getDefaultAsyncValue={getCurrentContractFunds} onUpdate={(res)=>{setPaymentAmount(res)}}/>
             ) : (
                 ""
             )}
+            {uploadedData ? (
+                <ParsedDataComponent data={uploadedData} setEditedData={setData}/>
+            ) : (
+                ""
+            )}
+            
         </div>
     );
 };
 
 export default PayProvidersComponent;
 
-async function payProviders(uploadedData) {
+async function getCurrentContractFunds() {
+    try {
+        const requestParams = {
+            method: 'eth_getBalance',
+            params: [ContractAddress, 'latest'], // 'latest' means to get the latest block
+        };
+        const balance = await window.ethereum.request(requestParams);
+        // The balance is returned in Wei. 
+        const balanceInEther = Web3.utils.fromWei(balance, 'ether');
+        console.log(`Balance of the contract at address ${ContractAddress}: ${balanceInEther} ETH`);
+        return balanceInEther;
+    } catch (error) {
+        console.error('Error getting contract balance:', error);
+        return "failed fetching balance";
+    }
+}
+async function payProviders(uploadedData, amountToPay) {
     if (window.ethereum) {
         if (window.ethereum.isConnected()) {
             const wallet = new Web3(window.ethereum);
@@ -73,13 +108,50 @@ async function payProviders(uploadedData) {
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
             const fromAccount = accounts[0];
             const paymentListOfProviders = [];
-            console.log(uploadedData)
-            
-            for (let item of  Object.getOwnPropertyNames(uploadedData)) {
-                const evmosAmount = Web3.utils.toWei(uploadedData[item], 'ether');
-                console.log("adding payee element", item, uploadedData[item], "eth amount", evmosAmount)
-                paymentListOfProviders.push({name: item, value: evmosAmount})
+            const gatherInfo = [];
+            let totalCu = 0;
+
+            for (let i of uploadedData) {
+                let address = i['Wallet Address']
+                let totalCUs = i['Total CUs']
+                console.log(address, totalCUs);
+                if (!address || !totalCUs) {
+                    alert("couldn't find one of the fields 'Wallet Address' and 'Total CUs'");
+                    return
+                }
+                if (totalCUs == "") {
+                    continue;
+                }
+                try {
+                    totalCu += Number(totalCUs)
+                } catch (e) {
+                    console.log("failed converting one of the elements", e)
+                    continue;
+                }
+                gatherInfo.push({address: address, totalCUs: totalCUs})
             }
+
+            console.log("payment list", gatherInfo)
+            console.log("totalCu", totalCu)
+
+            let totalCoinsSending = 0
+            let amountToPayWithSomeLeftOver = amountToPay / 1.001 // reduce a small amount from the contract so it wont overflow.
+            for (let i of gatherInfo) {
+                console.log("i.totalCus", i.totalCUs, "totalCu", totalCu, "amounttoPay", amountToPayWithSomeLeftOver)
+                const value = amountToPayWithSomeLeftOver / (totalCu / i.totalCUs);
+                console.log("value", value)
+                totalCoinsSending += value;
+                paymentListOfProviders.push({
+                    name: i.address,
+                    value: Web3.utils.toWei(String(value), 'ether'),
+                })
+            }
+            console.log(totalCoinsSending)
+            if (totalCoinsSending > amountToPay) {
+                alert("bug sending payments")
+                return;
+            }
+           
             const functionCallData = myContract.methods.payProviders(paymentListOfProviders).encodeABI();
             await window.ethereum.request({ 
                 method: "eth_sendTransaction",

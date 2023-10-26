@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import csv from 'csv-parser'; // You may need to install this library.
+import csv from 'csv-parser'; 
 
 const FileInputComponent = ({ onFileUpload }) => {
   const [file, setFile] = useState(null);
