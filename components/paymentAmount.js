@@ -9,6 +9,7 @@ const EditableInputComponent = ({ getDefaultAsyncValue, onUpdate }) => {
     async function fetchDefaultValue() {
       try {
         const value = await getDefaultAsyncValue();
+        onUpdate(value)
         setEditableValue(value);
       } catch (error) {
         console.log("failed fetching balance", error)
