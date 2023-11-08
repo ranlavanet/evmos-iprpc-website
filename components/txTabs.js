@@ -1,8 +1,6 @@
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css'; // Import the default CSS styles for tabs
-import FileInputComponent from "./fileInput";
-import ParsedDataComponent from "./parsedJsonData"
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import InputChecker from "./fundInputChecker"
 import Web3 from "web3"
 import { LavaEvmosProviderPaymentContract__factory } from "../contract/typechain-types"
@@ -51,9 +49,10 @@ async function fundSmartContract(inputValue) {
             await window.ethereum.request({ method: 'eth_requestAccounts' })
                 .then(async (accounts) => {
                 const fromAccount = accounts[0];
-                console.log(inputValue)
-                const evmosAmount = Web3.utils.toWei(inputValue, 'milliether');
-                console.log(evmosAmount)
+                console.log('inputValue', inputValue)
+                const evmosAmountWei = Web3.utils.toWei(inputValue, 'ether');
+                const evmosAmount = '0x'+parseInt(evmosAmountWei).toString(16);
+                console.log('evmosAmount', evmosAmount, evmosAmountWei)
                 await window.ethereum.request({ 
                     method: "eth_sendTransaction",
                     params: [{
@@ -82,7 +81,7 @@ async function sendSetBackupOwnerTx(inputValue) {
     if (window.ethereum) {
         if (window.ethereum.isConnected()) {
             const wallet = new Web3(window.ethereum);
-            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
+            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, ContractAddress);
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
             const fromAccount = accounts[0];
             const functionCallData = myContract.methods.setBackUpOwner(inputValue).encodeABI();
@@ -111,7 +110,7 @@ async function sendSetOwnerTx(inputValue) {
     if (window.ethereum) {
         if (window.ethereum.isConnected()) {
             const wallet = new Web3(window.ethereum);
-            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
+            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, ContractAddress);
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
             const fromAccount = accounts[0];
             const functionCallData = myContract.methods.setOwner(inputValue).encodeABI();
@@ -140,7 +139,7 @@ async function payProviders(uploadedData) {
     if (window.ethereum) {
         if (window.ethereum.isConnected()) {
             const wallet = new Web3(window.ethereum);
-            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, EvmosTestnetContract);
+            const myContract = new wallet.eth.Contract(LavaEvmosProviderPaymentContract__factory.abi, ContractAddress);
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
             const fromAccount = accounts[0];
             const paymentListOfProviders = [];

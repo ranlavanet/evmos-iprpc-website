@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { ChainId, ChainExplorer, ChainName, ChainRPC, ChainSymbol } from './utils';
 import Web3 from 'web3';
 
 const MetaMaskConnectButton = () => {
@@ -12,6 +13,50 @@ const MetaMaskConnectButton = () => {
       try {
         // console.log(window.ethereum.isConnected())
         // Request user accounts using the new 'eth_requestAccounts' method
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (chainId !== ChainId) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: '0x' + ChainId.toString(16) }],
+            });
+          } catch (switchError) {
+            // This error code indicates that the chain has not been added to MetaMask.
+            if (switchError.code === 4902) {
+              console.log("This network is not available in your metamask, please add it")
+
+              try {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [
+                    {
+                      chainId: '0x' + ChainId.toString(16),
+                      chainName: ChainName,
+                      rpcUrls: [
+                        ChainRPC
+                      ],
+                      blockExplorerUrls: [
+                        ChainExplorer
+                      ],
+                      nativeCurrency: {
+                        name: ChainSymbol,
+                        symbol: ChainSymbol,
+                        decimals: 18
+                      },
+                    }
+                  ]
+                })
+              } catch (addError) {
+                console.log(addError);
+                setConnecting(false);
+                return;
+              }
+            }
+            console.log("Failed to switch to the network")
+            setConnecting(false);
+            return;
+          }
+        }
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
 
         if (accounts && accounts.length > 0) {
@@ -34,11 +79,11 @@ const MetaMaskConnectButton = () => {
 
   return (
     <button
-        onClick={connectToMetaMask}
-        disabled={connecting}
-        className={`px-8 py-4 text-lg font-medium text-center text-white bg-orange-700 rounded-md ${connecting ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-        {connecting ? 'Connecting...' : 'Connect Wallet'}
+      onClick={connectToMetaMask}
+      disabled={connecting}
+      className={`px-8 py-4 text-lg font-medium text-center text-white bg-orange-700 rounded-md ${connecting ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      {connecting ? 'Connecting...' : 'Connect Wallet'}
     </button>
   );
 };
