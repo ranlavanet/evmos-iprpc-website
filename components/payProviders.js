@@ -12,8 +12,6 @@ const PayProvidersComponent = () => {
     const [paymentAmount, setPaymentAmount] = useState(0);
 
     const handleFileUpload = (data) => {
-        console.log("HAHAHAH2")
-        console.log(data)
         setUploadedData(data);
     };
     const handleLaunchTransaction = async () => {
@@ -98,10 +96,10 @@ function parseCsvFields(uploadedData, amountToPay) {
     console.log("@@@@@@@@@", amountToPay)
     for (let i of uploadedData) {
         let address = i['Wallet Address']
-        let totalCUs = i['Total CUs']
-        console.log(address, totalCUs);
+        let totalCUs = i['Percentage']
+        console.log(address, totalCUs, i);
         if (!address || !totalCUs) {
-            alert("couldn't find one of the fields 'Wallet Address' and 'Total CUs'");
+            alert("couldn't find one of the fields 'Wallet Address' and 'Percentage'");
             return
         }
         if (totalCUs == "") {
@@ -120,10 +118,14 @@ function parseCsvFields(uploadedData, amountToPay) {
     console.log("totalCu", totalCu)
 
     let totalCoinsSending = 0
-    let amountToPayWithSomeLeftOver = amountToPay / 1.001 // reduce a small amount from the contract so it wont overflow.
+    const amountToPayWei = Web3.utils.toWei(String(amountToPay), 'ether')
+    let amountToPayWithSomeLeftOver = amountToPayWei / 1.001 // reduce a small amount from the contract so it wont overflow.
     for (let i of gatherInfo) {
         console.log("i.totalCus", i.totalCUs, "totalCu", totalCu, "amounttoPay", amountToPayWithSomeLeftOver)
-        const value = amountToPayWithSomeLeftOver / (totalCu / i.totalCUs);
+        const value = Math.trunc(amountToPayWithSomeLeftOver / (totalCu / i.totalCUs));
+        if (value == 0) {
+            continue
+        }
         console.log("value", value)
         totalCoinsSending += value;
         paymentListOfProviders.push({
@@ -163,10 +165,10 @@ async function payProviders(uploadedData, amountToPay) {
 
             for (let i of uploadedData) {
                 let address = i['Wallet Address']
-                let totalCUs = i['Total CUs']
+                let totalCUs = i['Percentage']
                 console.log(address, totalCUs);
                 if (!address || !totalCUs) {
-                    alert("couldn't find one of the fields 'Wallet Address' and 'Total CUs'");
+                    alert("couldn't find one of the fields 'Wallet Address' and 'Percentage'");
                     return
                 }
                 if (totalCUs == "") {
@@ -185,19 +187,23 @@ async function payProviders(uploadedData, amountToPay) {
             console.log("totalCu", totalCu)
 
             let totalCoinsSending = 0
-            let amountToPayWithSomeLeftOver = amountToPay / 1.001 // reduce a small amount from the contract so it wont overflow.
+            const amountToPayWei = Web3.utils.toWei(String(amountToPay), 'ether')
+            let amountToPayWithSomeLeftOver = amountToPayWei / 1.001 // reduce a small amount from the contract so it wont overflow.
             for (let i of gatherInfo) {
                 console.log("i.totalCus", i.totalCUs, "totalCu", totalCu, "amounttoPay", amountToPayWithSomeLeftOver)
-                const value = amountToPayWithSomeLeftOver / (totalCu / i.totalCUs);
+                const value = Math.trunc(amountToPayWithSomeLeftOver / (totalCu / i.totalCUs));
+                if (value == 0) {
+                    continue
+                }
                 console.log("value", value)
                 totalCoinsSending += value;
                 paymentListOfProviders.push({
                     name: i.address,
-                    value: Web3.utils.toWei(String(value), 'ether'),
+                    value: String(value),
                 })
             }
             console.log(totalCoinsSending)
-            if (totalCoinsSending > amountToPay) {
+            if (totalCoinsSending > amountToPayWei) {
                 alert("bug sending payments")
                 return;
             }
